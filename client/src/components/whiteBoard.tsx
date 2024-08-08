@@ -1,7 +1,5 @@
-// src/Whiteboard.tsx
-import Konva from 'konva';
 import { Eraser, Pen, Redo, Undo } from 'lucide-react';
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useState, useRef } from 'react';
 import { Stage, Layer, Line } from 'react-konva';
 import Button from '@mui/material/Button';
 import { MenuItem, Select, Slider, Tooltip } from '@mui/material';
@@ -11,14 +9,14 @@ interface DrawingObject {
     points: number[];
     stroke: string;
     strokeWidth: number;
-    dash?: number[]; // Optional property for dashed lines
+    dash?: number[];
 }
 
 const Whiteboard: React.FC = () => {
     const [color, setColor] = useState<string>('#000000');
     const [size, setSize] = useState<number>(5);
     const [isErasing, setIsErasing] = useState<boolean>(false);
-    const [strokeType, setStrokeType] = useState<string>('solid'); // Default stroke type
+    const [strokeType, setStrokeType] = useState<string>('solid');
     const [drawingObjects, setDrawingObjects] = useState<DrawingObject[]>([]);
     const [currentDrawing, setCurrentDrawing] = useState<DrawingObject | null>(null);
     const [history, setHistory] = useState<DrawingObject[][]>([]);
@@ -32,7 +30,6 @@ const Whiteboard: React.FC = () => {
         const pointerPosition = stage.getPointerPosition();
 
         if (isErasing) {
-            // Implement erasing logic
             const layer = layerRef.current;
             const { x, y } = pointerPosition;
             const radius = size / 2;
@@ -66,9 +63,7 @@ const Whiteboard: React.FC = () => {
     };
 
     const handleMouseMove = (e: any) => {
-        if (isErasing) {
-            // Eraser logic should already be handled in handleMouseDown
-        } else {
+        if (!isErasing){
             if (!currentDrawing) return;
             const stage = stageRef.current;
             const pointerPosition = stage.getPointerPosition();
