@@ -46,7 +46,7 @@ export default function Register() {
         mobileNumber: res.data.user.mobileNumber,
         boards: res.data.user.boards
       })
-      navigate('/whiteboard')
+      navigate('/dashboard')
     } catch (error) {
       console.error('Login error:', error)
     } finally {

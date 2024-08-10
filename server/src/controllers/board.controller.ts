@@ -1,7 +1,7 @@
 import db from "../db";
-import { Request, Response } from "express"
-import { boards } from "../db/schema";
-
+import { Request, Response } from "express";
+import { boards, users } from "../db/schema";
+import { eq } from "drizzle-orm";
 
 export const createBoard = async (req: Request, res: Response) => {
     const { id, createdBy, name, password } = req.body;
@@ -12,11 +12,27 @@ export const createBoard = async (req: Request, res: Response) => {
                 id,
                 name,
                 createdBy,
-                password
+                password,
             })
-            .returning()
-        return res.json({ isSuccess: true, board })
+            .returning();
+
+        const [user] = await db
+            .select()
+            .from(users)
+            .where(eq(users.id, createdBy));
+
+        const updatedBoards = user.boards ? [...user.boards, id] : [id];
+
+        await db
+            .update(users)
+            .set({
+                boards: updatedBoards,
+            })
+            .where(eq(users.id, createdBy));
+
+        return res.json({ isSuccess: true, board });
     } catch (error) {
-        res.json({ isSuccess: false, message: "Error In creating board",error })
+        console.error(error);
+        res.status(500).json({ isSuccess: false, message: "Error in creating board", error });
     }
-}
+};

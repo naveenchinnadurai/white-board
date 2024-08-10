@@ -9,7 +9,7 @@ interface Prop {
 
 
 const NewBoard: React.FC<Prop> = (props) => {
-    const { user } = useUser();
+    const { user, navigateTo } = useUser();
     const [name, setBoardName] = useState<string>();
     const [errors, setErrors] = useState<string>("")
     const [password, setPassword] = useState<string>();
@@ -29,11 +29,11 @@ const NewBoard: React.FC<Prop> = (props) => {
                 password,
             });
             console.log(res.data);
+            navigateTo(`/whiteboard/${res.data.board.id}`)
         } catch (error) {
             console.error('Error creating room:', error);
         }
     };
-
     return (
         <div className={`flex flex-col items-center justify-center gap-2 ${props.className}`}>
             <Typography variant="h4" gutterBottom> Create a Collaborative Board </Typography>

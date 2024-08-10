@@ -9,7 +9,7 @@ interface Prop {
 function Model(props: Prop) {
     return (
         <Modal open={props.open} onClose={() => props.setOpen(false)} className='h-screen w-screen flex items-center justify-center ' >
-            <div className='w-1/2 h-3/5 bg-slate-300 rounded-3xl p-4'>
+            <div className='w-1/2 h-3/5 bg-sky-100 rounded-3xl p-4'>
                 {/* <Button className="bg-red-700 absolute top-0 right-0" onClick={() => props.setOpen(false)}>
                     <CloseIcon/>
                 </Button> */}
