@@ -19,9 +19,8 @@ export const register = async (req: Request, res: Response) => {
 
   const hashedPassword = await hashPassword(password);
 
-  let newUser;
   try {
-    [newUser] = await db
+    const[newUser] = await db
       .insert(users)
       .values({
         name,
@@ -30,7 +29,7 @@ export const register = async (req: Request, res: Response) => {
         password: hashedPassword,
       })
       .returning();
-    res.status(200).json({ isSuccess: true, message: "Account Created Successful", users: newUser });
+    res.status(200).json({ isSuccess: true, message: "Account Created Successful", user: newUser });
   } catch (error) {
     console.error("Error registering users:", error);
     res.status(500).json({ isSuccess: false, message: "Failed to register users" });
@@ -39,7 +38,6 @@ export const register = async (req: Request, res: Response) => {
 
 export const login = async (req: Request, res: Response) => {
   const { email, password } = req.body;
-
   let userInfo = await db
     .select()
     .from(users)
@@ -54,5 +52,5 @@ export const login = async (req: Request, res: Response) => {
   if (!isPasswordValid) {
     return res.status(400).json({ error: "Invalid password" });
   }
-  res.status(200).json({ message: "Login Successful", userInfo });
+  res.status(200).json({ message: "Login Successful", user:userInfo[0] });
 };

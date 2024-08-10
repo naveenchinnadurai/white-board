@@ -27,7 +27,13 @@ export const registerSchema = z.object({
             {
                 message: 'Confirm Password must be at least 8 characters long'
             })
-        }).refine((data) => data.password === data.confirmPassword, {
-            path: ['confirmPassword'],
-            message: 'Passwords do not match',
-        });
+}).refine((data) => data.password === data.confirmPassword, {
+    path: ['confirmPassword'],
+    message: 'Passwords do not match',
+});
+
+
+export const loginFormSchema = z.object({
+    email: z.string().email({ message: 'Please enter a valid email address' }),
+    password: z.string().min(8, { message: 'Password must be at least 8 characters long' }).max(64, { message: 'Password can be 64 characters maximum' }),
+})
