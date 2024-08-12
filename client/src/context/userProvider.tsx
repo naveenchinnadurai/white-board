@@ -1,10 +1,12 @@
 import { createContext, useContext, useState, ReactNode, useEffect } from 'react';
-import { User } from '../utils/types';
-import { useNavigate, NavigateFunction } from 'react-router-dom';
+import { Board, User } from '../utils/types';
+import { useNavigate, NavigateFunction, useLocation } from 'react-router-dom';
 
 interface UserContextProps {
     user: User | null;
+    boards: Board[] | null;
     setUserState: (user: User) => void;
+    setUserBoards: (boards: Board[]) => void;
     navigateTo: NavigateFunction;
     logout: () => void;
 }
@@ -16,18 +18,27 @@ interface UserProviderProps {
 }
 
 export const UserProvider = ({ children }: UserProviderProps) => {
+    const location = useLocation();
     const navigateTo = useNavigate()
     const [user, setUser] = useState<User | null>(null);
+    const [boards, setBoards] = useState<Board[] | null>(null);
 
     useEffect(() => {
         const user = localStorage.getItem('user');
+        const boards = localStorage.getItem('boards');
         if (user) {
             setUser(JSON.parse(user))
         }
-    }, [])
+        if (boards) {
+            setBoards(JSON.parse(boards).board)
+        }
+    }, [location.pathname])
 
     const setUserState = (user: User) => {
         localStorage.setItem('user', JSON.stringify(user))
+    };
+    const setUserBoards = (board: Board[]) => {
+        localStorage.setItem('boards', JSON.stringify({ board }))
     };
 
     const logout = () => {
@@ -37,7 +48,7 @@ export const UserProvider = ({ children }: UserProviderProps) => {
     };
 
     return (
-        <UserContext.Provider value={{ user, setUserState, navigateTo, logout }}>
+        <UserContext.Provider value={{ user, setUserState, navigateTo, logout, boards, setUserBoards }}>
             {children}
         </UserContext.Provider>
     );

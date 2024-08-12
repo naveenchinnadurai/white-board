@@ -10,8 +10,8 @@ export const users = pgTable("users", {
 });
 
 export const boards = pgTable("boards", {
-    id: text('id').notNull().unique(),
-    name:text('name').notNull(),
+    id: uuid('id').primaryKey().defaultRandom(),
+    name:text('name').notNull().unique(),
     createdBy: text("created_by"),
     currentParticipants: text("current_participants").array(),
     password: text("password").notNull(),
