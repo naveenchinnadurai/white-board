@@ -153,7 +153,6 @@ const Whiteboard: React.FC = () => {
                         disabled={isErasing}
                     />
                 </Tooltip>
-
                 <Tooltip title="Pen" placement="top">
                     <Button onClick={() => setIsErasing(false)} className="ml-4 px-4 py-2 bg-gray-200 border border-gray-400 rounded" >
                         <Pen />
@@ -195,7 +194,7 @@ const Whiteboard: React.FC = () => {
                     onChange={(e) => setStrokeType(e.target.value)}
                     sx={{
                         '.MuiOutlinedInput-notchedOutline': {
-                            border: 'none',     // Remove border outline
+                            border: 'none'
                         },
                     }}
                 >

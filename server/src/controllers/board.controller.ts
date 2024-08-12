@@ -76,18 +76,36 @@ export const joinBoard = async (req: Request, res: Response) => {
 };
 
 
-export const getBoardsByUser = async (req: Request, res: Response) => {
-    
+export const getBoard = async (req: Request, res: Response) => {
+
     const { id } = req.params;
     try {
         const userBoards = await db
-        .select()
-        .from(boards)
-        .where(eq(boards.createdBy, id));
+            .select()
+            .from(boards)
+            .where(eq(boards.id, id));
         console.log(userBoards)
         return res.status(201).json({ userBoards });
-    }catch(error){
+    } catch (error) {
         res.status(500).json({ message: "Error in fetching board", error });
     }
 
 };
+
+export async function removeParticipant(req: Request, res: Response) {
+    const { id } = req.params;
+    const participantId = req.body.id
+    const board = await db.select().from(boards)
+        .where(eq(boards.id, id))
+        .limit(1)
+
+
+    const updatedParticipants = board[0].currentParticipants?.filter(participant => participant !== participantId);
+
+    await db.update(boards)
+        .set({
+            currentParticipants: updatedParticipants,
+        })
+        .where(eq(boards.id, id));
+}
+

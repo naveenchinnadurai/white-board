@@ -3,7 +3,6 @@ import { Request, Response } from "express";
 import { boards, users } from "../db/schema";
 import { eq } from "drizzle-orm";
 import { comparePassword, hashPassword } from "../lib/utils";
-import { getBoardsByUser } from "./board.controller";
 
 export const register = async (req: Request, res: Response) => {
   const { name, email, password, mobileNumber } = req.body;

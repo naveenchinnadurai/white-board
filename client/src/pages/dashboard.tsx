@@ -72,7 +72,7 @@ const Dashboard: React.FC = () => {
                 {
                     boards?.map((e, i) => {
                         return (
-                            <Link to={`/whiteboard/${e.id}`} state={{ title: e.name }} className="flex flex-col justify-center" key={i}>
+                            <Link to={`/whiteboard/${e.id}`} state={{ board: e, }} className="flex flex-col justify-center" key={i}>
                                 <div className="h-52 bg-gray-300 rounded"></div>
                                 <h1 className="text-xl text-center mt-3">{e.name}</h1>
                             </Link>

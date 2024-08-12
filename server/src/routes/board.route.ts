@@ -1,10 +1,11 @@
 import express from 'express';
-import { createBoard, getBoardsByUser, joinBoard } from '../controllers/board.controller';
+import { createBoard, getBoard, joinBoard, removeParticipant } from '../controllers/board.controller';
 
 const router = express.Router();
 
-router.get('/:id', getBoardsByUser)
+router.get('/:id', getBoard)
 router.post('/', createBoard)
 router.put('/', joinBoard)
+router.put('/leave/:id', removeParticipant)
 
 export default router
