@@ -31,7 +31,11 @@ const NewBoard: React.FC<Prop> = (props) => {
                     password,
                 });
                 console.log(res.data);
-                navigateTo(`/whiteboard/${res.data.board.id}`)
+                navigateTo(`/whiteboard/${res.data.board.id}`, {
+                    state: {
+                        board: res.data.board
+                    }
+                })
             } catch (error) {
                 console.error('Error creating room:', error);
             } finally {

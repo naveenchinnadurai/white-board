@@ -11,6 +11,7 @@ function WhiteBoard() {
     const { navigateTo, user } = useUser();
     const location = useLocation();
     useEffect(() => {
+        console.log(location)
         const boardInfo = async () => {
             try {
                 if (!location.state.board.id) {
@@ -26,7 +27,11 @@ function WhiteBoard() {
     }, [])
 
     const back = async () => {
-        console.log("back")
+        console.log("back");
+        if (location.state.board.createdBy === user?.id) {
+            navigateTo('/dashboard');
+            return;
+        }
         try {
             const res = await axios.put(`http://localhost:7000/api/v1/board/leave/${location.state.board.id}`, {
                 participantId: user?.id
@@ -34,8 +39,9 @@ function WhiteBoard() {
             console.log(res)
         } catch (error) {
             console.log(error);
+        } finally {
+            navigateTo('/dashboard')
         }
-        navigateTo('/dashboard')
     }
     return (
         <div className="relative overflow-auto">
@@ -44,7 +50,7 @@ function WhiteBoard() {
                     <ArrowBack />
                     <h1 className="text-xl font-medium">Back</h1>
                 </Button>
-                <h1 className="text-2xl font-medium">{location.state.board.name}</h1>
+                <h1 className="text-2xl font-medium">{location.state?.board?.name}</h1>
                 <Button className='!px-4 !py-4 !rounded-full '>
                     <Users size={33} className='m-0' />
                 </Button>

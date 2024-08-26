@@ -94,18 +94,26 @@ export const getBoard = async (req: Request, res: Response) => {
 
 export async function removeParticipant(req: Request, res: Response) {
     const { id } = req.params;
-    const participantId = req.body.id
-    const board = await db.select().from(boards)
-        .where(eq(boards.id, id))
-        .limit(1)
+    const participantId = req.body.id;
+    try {
+        const board = await db.select().from(boards)
+            .where(eq(boards.id, id))
+            .limit(1)
+        console.log(board);
+
+        const updatedParticipants = board[0].currentParticipants?.filter(participant => participant !== participantId);
+        console.log(updatedParticipants);
 
 
-    const updatedParticipants = board[0].currentParticipants?.filter(participant => participant !== participantId);
+        const res = await db.update(boards)
+            .set({
+                currentParticipants: updatedParticipants,
+            })
+            .where(eq(boards.id, id));
 
-    await db.update(boards)
-        .set({
-            currentParticipants: updatedParticipants,
-        })
-        .where(eq(boards.id, id));
+        console.log(res)
+    } catch (error) {
+        console.log(error);
+    }
 }
 
