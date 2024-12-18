@@ -5,115 +5,148 @@ import { eq } from "drizzle-orm";
 import { comparePassword, hashPassword } from "../lib/utils";
 
 export const createBoard = async (req: Request, res: Response) => {
-    const { id, createdBy, name, password } = req.body;
+  const { createdBy, name, password } = req.body;
 
-    const hashedPassword = await hashPassword(password)
+  console.log({ createdBy, name, password });
 
-    try {
-        const [board] = await db
-            .insert(boards)
-            .values({
-                id,
-                name,
-                createdBy,
-                password: hashedPassword,
-            })
-            .returning();
+  const existingBoard = await db.select().from(boards).where(eq(boards.name, name)).limit(1);
 
-        const [user] = await db
-            .select()
-            .from(users)
-            .where(eq(users.id, createdBy));
+  if (existingBoard && existingBoard.length > 0) {
+    return res.status(403).json({ error: "Board Name Already taken! try another" });
+  }
 
-        const updatedBoards = user.boards ? [...user.boards, id] : [id];
+  const hashedPassword = await hashPassword(password);
 
-        await db
-            .update(users)
-            .set({
-                boards: updatedBoards,
-            })
-            .where(eq(users.id, createdBy));
+  try {
+    const [createdBoard] = await db
+      .insert(boards)
+      .values({
+        name,
+        createdBy,
+        password: hashedPassword,
+      })
+      .returning();
 
-        return res.json({ isSuccess: true, board });
-    } catch (error) {
-        console.error(error);
-        res.status(500).json({ isSuccess: false, message: "Error in creating board", error });
-    }
+    const [user] = await db.select().from(users).where(eq(users.id, createdBy));
+
+    const updatedBoards = user.boards ? [...user.boards, createdBoard.id] : [createdBoard.id];
+
+    await db
+      .update(users)
+      .set({
+        boards: updatedBoards,
+      })
+      .where(eq(users.id, createdBy));
+
+    const { password, ...board } = createdBoard;
+
+    return res.status(200).json({ status: true, board });
+  } catch (error) {
+    res.status(500).json({ error: "Error in creating board" });
+  }
 };
-
 
 export const joinBoard = async (req: Request, res: Response) => {
+  const { boardName, userId, password } = req.body;
 
-    const { id, boardId, password } = req.body;
+  if (userId === "") {
+    return res.status(400).json({ error: "User Id required" })
+  }
 
-    const [existingBoard] = await db.select().from(boards);
+  const existingBoard = await db.select().from(boards).where(eq(boards.name, boardName)).limit(1);
 
-    if (existingBoard.createdBy === id) {
-        return res.json({ isSuccess: false, message: "Your a host, not a participants" })
-    }
+  if (existingBoard.length <= 0) {
+    return res.status(404).json({ error: "Board not found!" });
+  }
 
-    const verify = await comparePassword(password, existingBoard.password)
+  if (existingBoard[0].createdBy == userId) {
+    return res.status(405).json({ error: "Your a host, not a participants" });
+  }
 
-    if (!verify) {
-        return res.json({ isSuccess: false, message: "Incorrect Password" });
-    }
+  const verify = await comparePassword(password, existingBoard[0].password);
 
-    try {
-        const updateParticipants = existingBoard.currentParticipants ? [...existingBoard.currentParticipants] : [id];
-        const [board] = await db
-            .update(boards)
-            .set({
-                currentParticipants: updateParticipants
-            })
-            .where(eq(boards.id, boardId)).returning()
+  if (!verify) {
+    return res.status(403).json({ error: "Incorrect Password" });
+  }
 
+  try {
+    const currParticipants: string[] = existingBoard[0].currentParticipants || [];
+    currParticipants.push(userId);
+    const updateParticipants: string[] = [...currParticipants];
+    console.log(updateParticipants)
 
-        return res.json({ isSuccess: true, board });
-    } catch (error) {
-        console.error(error);
-        res.status(500).json({ isSuccess: false, message: "Error in joining board", error });
-    }
+    const [board] = await db
+      .update(boards)
+      .set({
+        currentParticipants: updateParticipants
+      })
+      .where(eq(boards.id, existingBoard[0].id))
+      .returning();
+
+    return res.status(200).json({ status: true, board });
+  } catch (error) {
+    res.status(500).json({ error: "Error in joining board" });
+  }
 };
-
 
 export const getBoard = async (req: Request, res: Response) => {
+  const { id } = req.params;
+  try {
+    const [userBoards] = await db.select().from(boards).where(eq(boards.id, id));
 
-    const { id } = req.params;
-    try {
-        const userBoards = await db
-            .select()
-            .from(boards)
-            .where(eq(boards.id, id));
-        console.log(userBoards)
-        return res.status(201).json({ userBoards });
-    } catch (error) {
-        res.status(500).json({ message: "Error in fetching board", error });
-    }
+    console.log(userBoards);
+    const { password, ...board } = userBoards;
 
+    return res.status(201).json({ isSuccess: true, board });
+  } catch (error) {
+    res.status(500).json({ message: "Error in fetching board", error });
+  }
 };
 
-export async function removeParticipant(req: Request, res: Response) {
-    const { id } = req.params;
-    const participantId = req.body.id;
-    try {
-        const board = await db.select().from(boards)
-            .where(eq(boards.id, id))
-            .limit(1)
-        console.log(board);
+export async function leaveBoard(req: Request, res: Response) {
+  const { userId, boardId } = req.body;
 
-        const updatedParticipants = board[0].currentParticipants?.filter(participant => participant !== participantId);
-        console.log(updatedParticipants);
+  console.log({ userId, boardId });
 
+  try {
+    const board = await db
+      .select()
+      .from(boards)
+      .where(eq(boards.id, boardId))
+      .limit(1);
 
-        const res = await db.update(boards)
-            .set({
-                currentParticipants: updatedParticipants,
-            })
-            .where(eq(boards.id, id));
+    console.log(board);
 
-        console.log(res)
-    } catch (error) {
-        console.log(error);
+    if (board.length <= 0) {
+      return res.status(404).json({ error: "Board Not Found!!" })
     }
-}
 
+    const user = await db
+      .select()
+      .from(users)
+      .where(eq(users.id, userId))
+      .limit(1);
+
+    if (user.length <= 0) {
+      return res.status(404).json({ error: "User Not Found!!" })
+    }
+
+    console.log(board[0].currentParticipants);
+    const updatedParticipants = board[0].currentParticipants?.filter(
+      (participant) => participant !== userId
+    );
+
+    console.log(updatedParticipants);
+
+    await db
+      .update(boards)
+      .set({
+        currentParticipants: updatedParticipants,
+      })
+      .where(eq(boards.id, boardId));
+
+    res.status(201).json({ isSuccess: true })
+  } catch (error) {
+    res.status(500).json({ error: "Error in leaving board" });
+  }
+}

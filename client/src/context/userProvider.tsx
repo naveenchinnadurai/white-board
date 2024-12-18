@@ -1,12 +1,14 @@
-import { createContext, useContext, useState, ReactNode, useEffect } from 'react';
-import { Board, User } from '../utils/types';
+import { createContext, useContext, useState, ReactNode, useEffect, SetStateAction } from 'react';
+import { AlertType, BoardInfo, User } from '../utils/types';
 import { useNavigate, NavigateFunction, useLocation } from 'react-router-dom';
+import { Alert } from '@mui/material';
 
 interface UserContextProps {
     user: User | null;
-    boards: Board[] | null;
+    boards: BoardInfo[] | null;
+    setAlert: React.Dispatch<SetStateAction<AlertType>>;
     setUserState: (user: User) => void;
-    setUserBoards: (boards: Board[]) => void;
+    setUserBoards: (boards: BoardInfo[]) => void;
     navigateTo: NavigateFunction;
     logout: () => void;
 }
@@ -21,7 +23,7 @@ export const UserProvider = ({ children }: UserProviderProps) => {
     const location = useLocation();
     const navigateTo = useNavigate()
     const [user, setUser] = useState<User | null>(null);
-    const [boards, setBoards] = useState<Board[] | null>(null);
+    const [boards, setBoards] = useState<BoardInfo[] | null>(null);
 
     useEffect(() => {
         const user = localStorage.getItem('user');
@@ -37,7 +39,8 @@ export const UserProvider = ({ children }: UserProviderProps) => {
     const setUserState = (user: User) => {
         localStorage.setItem('user', JSON.stringify(user))
     };
-    const setUserBoards = (board: Board[]) => {
+
+    const setUserBoards = (board: BoardInfo[]) => {
         localStorage.setItem('boards', JSON.stringify({ board }))
     };
 
@@ -47,8 +50,31 @@ export const UserProvider = ({ children }: UserProviderProps) => {
         navigateTo('/')
     };
 
+    const [alert, setAlert] = useState<AlertType>({
+        state: false,
+        content: "",
+        type: undefined
+    });
+
+    useEffect(() => {
+        const timeout = setTimeout(() => {
+            setAlert({
+                state: false,
+                content: "",
+                type: undefined
+            })
+        }, 4000);
+
+        return () => clearTimeout(timeout)
+    }, [alert])
+
     return (
-        <UserContext.Provider value={{ user, setUserState, navigateTo, logout, boards, setUserBoards }}>
+        <UserContext.Provider value={{ user, setUserState, navigateTo, logout, boards, setUserBoards, setAlert }}>
+            {
+                alert.state ?
+                    < Alert variant="filled" severity={alert.type} className="absolute right-5 bottom-5 !pe-20"> {alert.content} </Alert>
+                    : null
+            }
             {children}
         </UserContext.Provider>
     );

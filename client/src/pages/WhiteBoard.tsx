@@ -1,42 +1,44 @@
 import { ArrowBack } from '@mui/icons-material';
 import { Button } from '@mui/material';
+import Collapse from '@mui/material/Collapse';
 import { Users } from 'lucide-react';
+import { useEffect, useState } from 'react';
 import { useLocation } from 'react-router-dom';
-import Whiteboard from '../components/whiteBoard';
+import Board from '../components/board';
 import { useUser } from '../context/userProvider';
-import { useEffect } from 'react';
-import axios from 'axios';
+import { BoardInfo, BoardType } from '../utils/types';
+import { getBoardInfo, leaveBoard } from '../utils/api';
 
 function WhiteBoard() {
     const { navigateTo, user } = useUser();
+    const [open, setOpen] = useState<boolean>(false);
     const location = useLocation();
-    useEffect(() => {
-        console.log(location)
-        const boardInfo = async () => {
-            try {
-                if (!location.state.board.id) {
-                    return;
-                }
-                const res = await axios.get(`http://localhost:7000/api/v1/board/${location.state.board.id}`)
-                console.log(res)
-            } catch (error) {
-                console.log(error);
-            }
+
+    const [boardInfo, setBoardInfo] = useState<BoardInfo | null>();
+
+    const getBoardDetails = async () => {
+        try {
+            if (!location.state.board.id) return;
+            const res: BoardType = await getBoardInfo(location.state.board.id)
+            setBoardInfo(res.board)
+        } catch (error) {
+            console.log(error);
         }
-        boardInfo();
+    }
+
+    useEffect(() => {
+        setBoardInfo(location.state?.board)
     }, [])
 
+    useEffect(() => {
+        getBoardDetails();
+    }, [open])
+
     const back = async () => {
-        console.log("back");
-        if (location.state.board.createdBy === user?.id) {
-            navigateTo('/dashboard');
-            return;
-        }
         try {
-            const res = await axios.put(`http://localhost:7000/api/v1/board/leave/${location.state.board.id}`, {
-                participantId: user?.id
-            })
-            console.log(res)
+            if (boardInfo?.createdBy != user?.id) {
+                await leaveBoard(boardInfo?.id, user?.id)
+            }
         } catch (error) {
             console.log(error);
         } finally {
@@ -44,18 +46,30 @@ function WhiteBoard() {
         }
     }
     return (
-        <div className="relative overflow-auto">
+        <div className="relative overflow-auto h-screen">
             <nav className="absolute top-0 px-5 flex w-full justify-between items-center z-10 bg-transparent">
                 <Button onClick={back} className="flex gap-2 justify-center items-center">
                     <ArrowBack />
-                    <h1 className="text-xl font-medium">Back</h1>
+                    <h1 className="text-lg font-medium">Back</h1>
                 </Button>
-                <h1 className="text-2xl font-medium">{location.state?.board?.name}</h1>
-                <Button className='!px-4 !py-4 !rounded-full '>
-                    <Users size={33} className='m-0' />
-                </Button>
+                <h1 className="text-2xl font-medium">{boardInfo?.name}</h1>
+                <div className="relative">
+                    <Button className='px-4 py-4 rounded-full flex-col' onClick={() => setOpen(!open)}>
+                        <Users size={33} className='m-0' />
+                    </Button>
+                    <Collapse in={open} className='absolute right-0 w-auto'>
+                        {
+                            boardInfo?.currentParticipants && boardInfo?.currentParticipants.map((e) => {
+                                return (
+                                    <h1>{e}</h1>
+                                )
+                            })
+                        }
+                    </Collapse>
+                </div>
             </nav>
-            <Whiteboard />
+
+            <Board />
         </div>
     );
 }

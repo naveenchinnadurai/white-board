@@ -1,38 +1,22 @@
-import { useEffect, useState } from 'react';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { useForm } from 'react-hook-form';
-import { z } from 'zod';
-import { Link } from 'react-router-dom';
-import { Button, TextField, IconButton, InputAdornment, FormControl, InputLabel, OutlinedInput, FormHelperText, Alert, CircularProgress } from '@mui/material';
 import { Visibility, VisibilityOff } from '@mui/icons-material';
-import { registerSchema } from '../utils/formSchema';
-import { useUser } from '../context/userProvider';
+import { Button, CircularProgress, FormControl, FormHelperText, IconButton, InputAdornment, InputLabel, OutlinedInput, TextField } from '@mui/material';
 import axios from 'axios';
-import { AlertType } from '../utils/types';
+import { useState } from 'react';
+import { useForm } from 'react-hook-form';
+import { Link } from 'react-router-dom';
+import { z } from 'zod';
+import { useUser } from '../context/userProvider';
+import { registerSchema } from '../utils/formSchema';
 
 export default function Register() {
-  const { setUserState, navigateTo, user } = useUser();
+  const { setUserState, navigateTo, user, setAlert } = useUser();
 
   if (user?.isLoggedIn) {
     navigateTo('/dashboard')
   }
 
   const [loading, setLoading] = useState(false);
-  const [alert, setAlert] = useState<AlertType>({
-    state: false,
-    content: "",
-    type: undefined
-  });
-
-  useEffect(() => {
-    setTimeout(() => {
-      setAlert({
-        state: false,
-        content: "",
-        type: undefined
-      })
-    }, 3000);
-  }, [alert]);
 
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
@@ -70,11 +54,12 @@ export default function Register() {
         navigateTo('/dashboard')
       }
     } catch (error: any) {
+      console.log(error)
       const code = error.response.status;
       if (code === 303) {
         setAlert({
           state: true,
-          content: error.response.data.message,
+          content: error.response.data.error,
           type: "warning"
         })
       }
@@ -99,11 +84,6 @@ export default function Register() {
   return (
     <>
       <div className='flex h-svh w-svw items-center justify-center bg-slate-900 text-white'>
-        {
-          alert.state ?
-            < Alert variant="filled" severity={alert.type} className="absolute right-5 bottom-5 !pe-20"> {alert.content} </Alert>
-            : null
-        }
         <div className='flex min-w-[400px] flex-col gap-4'>
           <h1 className='text-2xl font-bold'>Create your Zween White Board account</h1>
           <p className='mb-3'>

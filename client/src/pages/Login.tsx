@@ -1,15 +1,14 @@
 import { zodResolver } from '@hookform/resolvers/zod'
-import { useEffect, useState } from 'react'
+import { Visibility, VisibilityOff } from '@mui/icons-material'
+import { Button, CircularProgress, IconButton, TextField, Typography } from '@mui/material'
+import { styled } from '@mui/material/styles'
+import axios from 'axios'
+import { useState } from 'react'
 import { useForm } from 'react-hook-form'
 import { Link } from 'react-router-dom'
 import { z } from 'zod'
-import { Visibility, VisibilityOff } from '@mui/icons-material'
-import { Alert, Button, CircularProgress, IconButton, TextField, Typography } from '@mui/material'
-import { styled } from '@mui/material/styles'
 import { useUser } from '../context/userProvider'
 import { loginFormSchema } from '../utils/formSchema'
-import axios from 'axios'
-import { AlertType } from '../utils/types'
 
 
 type LoginFormValues = z.infer<typeof loginFormSchema>
@@ -22,25 +21,11 @@ const FormContainer = styled('div')(({ theme }) => ({
 }))
 
 export default function Login() {
-  const { navigateTo, user } = useUser();
+  const { navigateTo, user, setAlert } = useUser();
   if (user?.isLoggedIn) {
     navigateTo('/dashboard')
   }
-  const [alert, setAlert] = useState<AlertType>({
-    state: false,
-    content: "",
-    type: undefined
-  });
 
-  useEffect(() => {
-    setTimeout(() => {
-      setAlert({
-        state: false,
-        content: "",
-        type: undefined
-      })
-    }, 4000);
-  }, [alert])
   const { setUserState, setUserBoards } = useUser();
   const [showPassword, setShowPassword] = useState(false)
   const [isLoading, setIsLoading] = useState(false)
@@ -68,37 +53,52 @@ export default function Login() {
           email: res.data.user.email,
           mobileNumber: res.data.user.mobileNumber
         })
-        console.log(res.data.userBoards)
         setUserBoards(res.data.userBoards)
         navigateTo('/dashboard')
-      }
-    } catch (error: any) {
-      const code = error.response.status;
-      if (code === 404) {
         setAlert({
           state: true,
-          content: error.response.data.message,
-          type: "warning"
-        })
-      }
-      else if (code === 400) {
-        setAlert({
-          state: true,
-          content: error.response.data.message,
-          type: "error"
-        })
-      } else if (code === 500) {
-        setAlert({
-          state: true,
-          content: error.response.data.message,
-          type: "info"
+          content: "Login successful!!",
+          type: "success"
         })
       } else {
         setAlert({
           state: true,
-          content: "Sorry Something went Wrong",
+          content: "Sorry, Something went Wrong",
           type: "info"
         })
+      }
+    } catch (error: any) {
+      const code = error.response.status;
+      switch (code) {
+        case 404:
+          setAlert({
+            state: true,
+            content: error.response.data.error,
+            type: "warning"
+          })
+          break;
+        case 303:
+          setAlert({
+            state: true,
+            content: error.response.data.error,
+            type: "error"
+          })
+          break;
+        case 500:
+          setAlert({
+            state: true,
+            content: error.response.data.error,
+            type: "info"
+          })
+          break;
+
+        default:
+          setAlert({
+            state: true,
+            content: "Sorry, Something went Wrong",
+            type: "info"
+          })
+          break;
       }
     } finally {
       setIsLoading(false)
@@ -108,12 +108,7 @@ export default function Login() {
 
   return (
     <div className='flex h-screen w-screen items-center justify-center bg-slate-900 text-white'>
-      {
-        alert.state ?
-          < Alert variant="filled" severity={alert.type} className="absolute right-5 bottom-5 !pe-20"> {alert.content} </Alert>
-          : null
-      }
-      <FormContainer>
+      <FormContainer className=''>
         <Typography variant="h4" component="h1" gutterBottom>
           Sign into Zween White <br /> Board account
         </Typography>
@@ -125,11 +120,11 @@ export default function Login() {
           .
         </Typography>
 
-        <form onSubmit={form.handleSubmit(onSubmit)}>
+        <form onSubmit={form.handleSubmit(onSubmit)} className='flex flex-col'>
           <TextField
             label="Email"
             margin="normal"
-            className='!placeholder:text-white !text-white border-w w-4/5'
+            className='!placeholder:text-white !text-white border-w'
             {...form.register('email')}
             error={!!form.formState.errors.email}
             helperText={form.formState.errors.email?.message}
@@ -158,7 +153,7 @@ export default function Login() {
           <TextField
             label="Password"
             margin="normal"
-            className='w-4/5'
+            className=''
             type={showPassword ? 'text' : 'password'}
             {...form.register('password')}
             error={!!form.formState.errors.password}
@@ -197,7 +192,7 @@ export default function Login() {
             type="submit"
             variant="contained"
             color="primary"
-            className='w-4/5'
+            className=''
             disabled={isLoading}
             style={{ marginTop: '16px' }}
           >

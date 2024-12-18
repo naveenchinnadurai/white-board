@@ -8,7 +8,7 @@ export interface User {
   mobileNumber?: string;
 }
 
-export interface Board {
+export interface BoardInfo {
   createdBy: string
   currentParticipants: string[]
   id:string
@@ -19,4 +19,16 @@ export interface AlertType {
   state: boolean;
   content: string;
   type: AlertColor | undefined
+}
+
+export interface BoardType {
+  board: {
+      id: string;
+      createdBy: string;
+      currentParticipants: string[]
+      name: string
+  };
+  status:boolean,
+  message?:string,
+  error?:string
 }
